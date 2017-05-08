@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Ward Text Sender</string>
+    <string name="open_contacts_from_google_drive">Open Contacts from Google Drive</string>
+    <string name="ward_text_sender">Ward Text Sender</string>
+    <string name="x_contacts_available">%1$d contacts available</string>
+    <string name="x_contacts_match">%1$d contacts match</string>
+    <string name="tags_available">Tags available: %1$s</string>
+    <string name="tag_instructions">Please enter your desired tags separated by comma.\nUse plus between tags to indicate that both must exist.</string>
+    <string name="send">Send</string>
+</resources>
