@@ -52,6 +52,8 @@ object ContactFile {
         }
     }
 
+    fun write(contacts: List<Contact>): ByteArray = contacts.joinToString("\n") { it.run { "$name, $phoneNumber, ${tags.joinToString()}" } }.toByteArray()
+
     private fun String.toPhoneNumber(): String? {
         val potentialNumber = this.filter { it.isDigit() }
         val firstDigit = potentialNumber.firstOrNull()

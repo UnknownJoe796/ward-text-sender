@@ -1,8 +1,10 @@
 package com.ivieleague.wardtextsender
 
 import android.graphics.Color
+import android.graphics.Typeface
 import android.widget.EditText
 import android.widget.TextView
+import com.lightningkite.kotlin.anko.textColorResource
 import org.jetbrains.anko.textColor
 
 fun EditText.styleDefault() {
@@ -14,6 +16,7 @@ fun TextView.styleDefault() {
 }
 
 fun TextView.styleHeader() {
-    textColor = Color.BLACK
-    textSize = 22f
+    textSize = 16f
+    setTypeface(null, Typeface.BOLD)
+    textColorResource = android.R.color.primary_text_dark
 }
