@@ -1,4 +1,4 @@
-package com.ivieleague.wardtextsender
+package com.ivieleague.textcannon
 
 import android.view.Gravity
 import android.view.View

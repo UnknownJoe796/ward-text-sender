@@ -1,4 +1,4 @@
-package com.ivieleague.wardtextsender
+package com.ivieleague.textcannon
 
 /**
  * Created by josep on 5/7/2017.

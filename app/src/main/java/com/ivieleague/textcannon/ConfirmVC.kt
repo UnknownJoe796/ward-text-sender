@@ -1,4 +1,4 @@
-package com.ivieleague.wardtextsender
+package com.ivieleague.textcannon
 
 import android.Manifest
 import android.app.Activity

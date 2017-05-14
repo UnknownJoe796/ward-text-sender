@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ivieleague.wardtextsender">
+    package="com.ivieleague.textcannon">
 
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -18,7 +18,7 @@
             android:name="com.google.android.apps.drive.APP_ID"
             android:value="id=wardtextsender-167001" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name="com.ivieleague.textcannon.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
