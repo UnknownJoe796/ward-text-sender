@@ -19,6 +19,7 @@ import com.lightningkite.kotlin.anko.viewcontrollers.AnkoViewController
 import com.lightningkite.kotlin.anko.viewcontrollers.containers.VCStack
 import com.lightningkite.kotlin.anko.viewcontrollers.implementations.VCActivity
 import com.lightningkite.kotlin.async.invokeAsync
+import com.lightningkite.kotlin.files.child
 import com.lightningkite.kotlin.observable.list.ObservableListWrapper
 import com.lightningkite.kotlin.observable.list.filtering
 import com.lightningkite.kotlin.observable.property.StandardObservableProperty
@@ -58,6 +59,19 @@ class SendVC(val stack: VCStack) : AnkoViewController() {
     }
 
     override fun createView(ui: AnkoContext<VCActivity>): View = ui.scrollView {
+
+        if (contacts.isEmpty()) {
+            val file = ui.owner.filesDir.child("main.csv")
+            if (file.exists()) {
+                {
+                    val contacts = ContactFile.parse(file.readText())
+                    contacts
+                }.invokeAsync {
+                    this@SendVC.contacts.replace(it)
+                }
+            }
+        }
+
         verticalLayout {
             padding = dip(8)
 
@@ -86,6 +100,29 @@ class SendVC(val stack: VCStack) : AnkoViewController() {
                                         contacts
                                     }.invokeAsync {
                                         this@SendVC.contacts.replace(it)
+                                    }
+                                }
+                        )
+                    }
+                }.lparams(dip(32), dip(32)) { margin = dip(8) }
+
+                imageButton {
+                    backgroundResource = selectableItemBackgroundBorderlessResource
+                    imageResource = R.drawable.ic_folder_open_black_24dp
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
+                    padding = dip(4)
+                    onClick {
+                        ui.owner.selector(
+                                null,
+                                R.string.open_default_file to {
+                                    val file = ui.owner.filesDir.child("main.csv")
+                                    if (file.exists()) {
+                                        {
+                                            val contacts = ContactFile.parse(file.readText())
+                                            contacts
+                                        }.invokeAsync {
+                                            this@SendVC.contacts.replace(it)
+                                        }
                                     }
                                 }
                         )

@@ -13,8 +13,10 @@
     <string name="save_contacts_file">Save Contacts File</string>
     <string name="new_file">New File</string>
     <string name="overwrite_file">Overwrite File</string>
+    <string name="overwrite_default_file">Overwrite Default File</string>
     <string name="send_to_x_contacts">Send to %1$d contacts</string>
     <string name="message">Message</string>
     <string name="validation_message_blank">Please write your message.</string>
     <string name="validation_no_contacts">Please filter such that you have contacts.</string>
+    <string name="open_default_file">Open Default File</string>
 </resources>

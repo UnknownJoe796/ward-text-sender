@@ -11,6 +11,8 @@ import com.lightningkite.kotlin.anko.observable.adapter.listAdapter
 import com.lightningkite.kotlin.anko.observable.bindString
 import com.lightningkite.kotlin.anko.viewcontrollers.AnkoViewController
 import com.lightningkite.kotlin.anko.viewcontrollers.implementations.VCActivity
+import com.lightningkite.kotlin.async.invokeAsync
+import com.lightningkite.kotlin.files.child
 import com.lightningkite.kotlin.observable.list.ObservableList
 import com.lightningkite.kotlin.observable.property.bind
 import com.lightningkite.kotlin.observable.property.sub
@@ -30,22 +32,22 @@ class EditContactsVC(val contacts: ObservableList<Contact>) : AnkoViewController
             }.lparams(0, wrapContent, 1f) { margin = dip(8) }
             imageButton {
                 backgroundResource = selectableItemBackgroundBorderlessResource
-                imageResource = R.drawable.ic_save_black_24dp
+                imageResource = R.mipmap.drive_icon
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
                 padding = dip(4)
                 onClick {
                     ui.owner.selector(
                             null,
-                            R.string.new_file to {
-                                ui.owner.newGoogleDriveFile(
-                                        resources.getString(R.string.save_contacts_file),
-                                        ContactFile.write(contacts),
-                                        "text/csv",
-                                        onCancel = { println("Canceled") },
-                                        onError = { println("On Error $it") },
-                                        onDone = { println("Success") }
-                                )
-                            },
+                            //                            R.string.new_file to {
+//                                ui.owner.newGoogleDriveFile(
+//                                        resources.getString(R.string.save_contacts_file),
+//                                        ContactFile.write(contacts),
+//                                        "text/csv",
+//                                        onCancel = { println("Canceled") },
+//                                        onError = { println("On Error $it") },
+//                                        onDone = { println("Success") }
+//                                )
+//                            },
                             R.string.overwrite_file to {
                                 ui.owner.getGoogleDriveFileOverwrite(
                                         ContactFile.write(contacts),
@@ -54,6 +56,26 @@ class EditContactsVC(val contacts: ObservableList<Contact>) : AnkoViewController
                                         onError = { println("On Error $it") },
                                         onDone = { println("Success") }
                                 )
+                            }
+                    )
+                }
+            }.lparams(dip(32), dip(32)) { gravity = Gravity.RIGHT; margin = dip(8) }
+            imageButton {
+                backgroundResource = selectableItemBackgroundBorderlessResource
+                imageResource = R.drawable.ic_save_black_24dp
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
+                padding = dip(4)
+                onClick {
+                    ui.owner.selector(
+                            null,
+                            R.string.overwrite_default_file to {
+                                val copy = ArrayList<Contact>(contacts)
+                                val doer = fun() {
+                                    val file = ui.owner.filesDir.child("main.csv")
+                                    if (!file.exists()) file.createNewFile()
+                                    file.writeBytes(ContactFile.write(copy))
+                                }
+                                doer.invokeAsync()
                             }
                     )
                 }

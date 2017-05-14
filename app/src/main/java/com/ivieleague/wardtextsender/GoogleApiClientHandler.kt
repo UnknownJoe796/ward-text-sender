@@ -36,10 +36,16 @@ fun VCActivity.getGoogleDriveFileOverwrite(
 ) = getGoogleDriveFile(types, onCancel, onError, onFileObtained = { client, file ->
     file.open(client, DriveFile.MODE_WRITE_ONLY, null).setResultCallback {
         try {
-            val outputStream = it.driveContents.outputStream
+            if (!it.status.isSuccess) {
+                throw Exception("It failed: ${it.status.statusMessage}")
+            }
+            val contents = it.driveContents
+            val outputStream = contents.outputStream
             outputStream.write(data)
+            outputStream.flush()
             outputStream.close()
-            onDone()
+            contents.commit(client, MetadataChangeSet.Builder().build())
+            onDone.invoke()
             client.disconnect()
         } catch(e: Throwable) {
             onError.invoke(e)
@@ -58,10 +64,15 @@ fun VCActivity.newGoogleDriveFile(
 ) = newGoogleDriveFile(dialogTitle, type, onCancel, onError, onFileObtained = { client, file ->
     file.open(client, DriveFile.MODE_WRITE_ONLY, null).setResultCallback {
         try {
-            val outputStream = it.driveContents.outputStream
+            if (!it.status.isSuccess) {
+                throw Exception("It failed: ${it.status.statusMessage}")
+            }
+            val contents = it.driveContents
+            val outputStream = contents.outputStream
             outputStream.write(data)
+            outputStream.flush()
             outputStream.close()
-            onDone()
+            contents.commit(client, MetadataChangeSet.Builder().build())
             client.disconnect()
         } catch(e: Throwable) {
             onError.invoke(e)
