@@ -1,14 +1,5 @@
 package com.ivieleague.wardtextsender
 
-import android.Manifest
-import android.app.Activity
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.support.v4.app.NotificationCompat
-import android.telephony.SmsManager
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
@@ -196,7 +187,7 @@ class SendVC(val stack: VCStack) : AnkoViewController() {
 
             button {
                 lifecycle.bind(matchingContacts.onUpdate) {
-                    text = resources.getString(R.string.send_to_x_contacts, it.size)
+                    text = resources.getString(R.string.review_sending_to_x_contacts, it.size)
                 }
                 onClick {
                     if (message.value.isBlank()) {
@@ -207,77 +198,10 @@ class SendVC(val stack: VCStack) : AnkoViewController() {
                         snackbar(R.string.validation_no_contacts)
                         return@onClick
                     }
-                    val contacts = ArrayList(matchingContacts)
-                    val notificationBuilder = NotificationCompat.Builder(context)
-                            .setSmallIcon(R.drawable.ic_notification)
-                            .setContentTitle("Sending texts...")
-                            .setContentText("0 / ${contacts.size}")
-                            .setProgress(contacts.size, 0, false)
-                    ui.owner.sendSmsList(
-                            numbers = contacts.map { it.phoneNumber },
-                            message = message.value,
-                            onProgress = { index, errors ->
-                                notificationBuilder.setContentText("$index / ${contacts.size}")
-                                notificationBuilder.setProgress(contacts.size, index, false)
-                                context.notificationManager.notify(0, notificationBuilder.build())
-                            },
-                            onComplete = { errors ->
-                                notificationBuilder.setContentText("Complete")
-                                notificationBuilder.setProgress(contacts.size, contacts.size, false)
-                                context.notificationManager.notify(0, notificationBuilder.build())
-                            }
-                    )
+                    stack.push(ConfirmVC(ArrayList(matchingContacts), message.value))
                 }
             }.lparams(matchParent, wrapContent) { margin = dip(8) }
 
-        }
-    }
-
-    fun VCActivity.sendSmsList(numbers: List<String>, message: String, onProgress: (count: Int, errorCount: Int) -> Unit, onComplete: (errorCount: Int) -> Unit) {
-        var index = 0
-        var errorCount = 0
-        fun sendNext() {
-            if (index >= numbers.size) {
-                onComplete.invoke(errorCount)
-            } else {
-                onProgress.invoke(index, errorCount)
-                sendSms(numbers[index], message, onError = { errorCount++ }, onComplete = {
-                    sendNext()
-                })
-            }
-            index++
-        }
-        if (numbers.isNotEmpty()) {
-            sendNext()
-        }
-    }
-
-    fun VCActivity.sendSms(number: String, message: String, onError: (code: Int) -> Unit, onComplete: () -> Unit) {
-        requestPermission(Manifest.permission.SEND_SMS) {
-            if (it) {
-                println("Sending...")
-                try {
-                    registerReceiver(object : BroadcastReceiver() {
-                        override fun onReceive(context: Context?, intent: Intent?) {
-                            println("RESULT! $resultCode")
-                            when (resultCode) {
-                                Activity.RESULT_OK -> {
-                                    onComplete.invoke()
-                                }
-                                else -> {
-                                    onError.invoke(resultCode)
-                                }
-                            }
-                            unregisterReceiver(this)
-                        }
-                    }, IntentFilter(SENT))
-                    SmsManager.getDefault().sendTextMessage(number, null, message, PendingIntent.getBroadcast(this, 0, Intent(SENT), 0), null)
-                } catch(e: Throwable) {
-                    e.printStackTrace()
-                }
-            } else {
-                onError.invoke(NEED_PERMISSION)
-            }
         }
     }
 }
