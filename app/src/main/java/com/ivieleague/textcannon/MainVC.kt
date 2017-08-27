@@ -4,15 +4,15 @@ import android.view.Gravity
 import android.view.View
 import com.lightningkite.kotlin.anko.selectableItemBackgroundBorderlessResource
 import com.lightningkite.kotlin.anko.viewcontrollers.AnkoViewController
+import com.lightningkite.kotlin.anko.viewcontrollers.VCContext
 import com.lightningkite.kotlin.anko.viewcontrollers.containers.VCStack
-import com.lightningkite.kotlin.anko.viewcontrollers.implementations.VCActivity
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.appBarLayout
 
 class MainVC : AnkoViewController() {
     val stack = VCStack().apply { push(SendVC(this)) }
 
-    override fun createView(ui: AnkoContext<VCActivity>): View = ui.verticalLayout {
+    override fun createView(ui: AnkoContext<VCContext>): View = ui.verticalLayout {
 
         appBarLayout {
             linearLayout {
@@ -27,7 +27,7 @@ class MainVC : AnkoViewController() {
                         else
                             animate().alpha(1f).setDuration(100).start()
                     }
-                    onClick {
+                    setOnClickListener { it: View? ->
                         if (stack.size > 1) {
                             stack.pop()
                         }
@@ -42,7 +42,7 @@ class MainVC : AnkoViewController() {
             }.lparams(matchParent, wrapContent)
         }.lparams(matchParent, wrapContent)
 
-        viewContainer(stack).lparams(matchParent, 0, 1f)
+        viewContainer(ui.owner, stack).lparams(matchParent, 0, 1f)
     }
 
     override fun onBackPressed(backAction: () -> Unit) {

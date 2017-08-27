@@ -3,8 +3,6 @@
     package="com.ivieleague.textcannon">
 
     <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -14,16 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <meta-data
-            android:name="com.google.android.apps.drive.APP_ID"
-            android:value="id=wardtextsender-167001" />
-
         <activity android:name="com.ivieleague.textcannon.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!--<intent-filter>-->
+            <!--<action android:name="android.intent.action.VIEW"/>-->
+            <!--<data android:mimeType="text/csv"/>-->
+            <!--</intent-filter>-->
         </activity>
     </application>
 

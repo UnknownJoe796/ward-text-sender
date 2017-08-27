@@ -47,12 +47,13 @@ object ContactFile {
             }
             println("$row -> name: $totalName, phone: $phone, tags: $tags")
             if (totalName.isNotBlank() && phone != null) {
-                Contact(totalName, phone, tags)
+                Contact(totalName.trim(), phone.trim(), tags)
             } else null
         }
     }
 
-    fun write(contacts: List<Contact>): ByteArray = contacts.joinToString("\n") { it.run { "$name, $phoneNumber, ${tags.joinToString()}" } }.toByteArray()
+    fun writeString(contacts: List<Contact>): String = contacts.joinToString("\n") { it.run { "$name, $phoneNumber, ${tags.joinToString()}" } }
+    fun write(contacts: List<Contact>): ByteArray = writeString(contacts).toByteArray()
 
     private fun String.toPhoneNumber(): String? {
         val potentialNumber = this.filter { it.isDigit() }

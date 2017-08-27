@@ -10,19 +10,20 @@ import android.content.IntentFilter
 import android.content.res.Resources
 import android.support.v4.app.NotificationCompat
 import android.telephony.SmsManager
+import android.util.Log
 import android.view.View
 import com.lightningkite.kotlin.anko.viewcontrollers.AnkoViewController
-import com.lightningkite.kotlin.anko.viewcontrollers.implementations.VCActivity
+import com.lightningkite.kotlin.anko.viewcontrollers.VCContext
 import org.jetbrains.anko.*
 
 /**
  * Created by josep on 5/14/2017.
  */
-class ConfirmVC(val contacts: List<Contact>, val message: String) : AnkoViewController() {
+class ConfirmVC(val contacts: List<Contact>, val message: String, val onSend: () -> Unit) : AnkoViewController() {
 
     override fun getTitle(resources: Resources): String = resources.getString(R.string.confirm)
 
-    override fun createView(ui: AnkoContext<VCActivity>): View = ui.scrollView {
+    override fun createView(ui: AnkoContext<VCContext>): View = ui.scrollView {
         verticalLayout {
             padding = dip(8)
 
@@ -54,15 +55,16 @@ class ConfirmVC(val contacts: List<Contact>, val message: String) : AnkoViewCont
             button {
                 textResource = R.string.send
 
-                onClick {
+                setOnClickListener { it: View? ->
 
                     val notificationBuilder = NotificationCompat.Builder(context)
                             .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle("Sending texts...")
                             .setContentText("0 / ${contacts.size}")
+                            .setPriority(NotificationCompat.PRIORITY_LOW)
                             .setProgress(contacts.size, 0, false)
                     ui.owner.sendSmsList(
-                            numbers = contacts.map { it.phoneNumber },
+                            contacts = contacts,
                             message = message,
                             onProgress = { index, errors ->
                                 notificationBuilder.setContentText("$index / ${contacts.size}")
@@ -70,6 +72,12 @@ class ConfirmVC(val contacts: List<Contact>, val message: String) : AnkoViewCont
                                 context.notificationManager.notify(0, notificationBuilder.build())
                             },
                             onComplete = { errors ->
+                                if (errors == 0) {
+                                    notificationBuilder.setContentTitle("Texts sent.")
+                                } else {
+                                    notificationBuilder.setContentTitle("Texts sent with $errors errors.")
+                                }
+                                notificationBuilder.priority = NotificationCompat.PRIORITY_DEFAULT
                                 notificationBuilder.setContentText("Complete")
                                 notificationBuilder.setProgress(contacts.size, contacts.size, false)
                                 context.notificationManager.notify(0, notificationBuilder.build())
@@ -81,45 +89,74 @@ class ConfirmVC(val contacts: List<Contact>, val message: String) : AnkoViewCont
         }
     }
 
-    fun VCActivity.sendSmsList(numbers: List<String>, message: String, onProgress: (count: Int, errorCount: Int) -> Unit, onComplete: (errorCount: Int) -> Unit) {
+    fun VCContext.sendSmsList(contacts: List<Contact>, message: String, onProgress: (count: Int, errorCount: Int) -> Unit, onComplete: (errorCount: Int) -> Unit) {
         var index = 0
         var errorCount = 0
         fun sendNext() {
-            if (index >= numbers.size) {
+            if (index >= contacts.size) {
                 onComplete.invoke(errorCount)
             } else {
                 onProgress.invoke(index, errorCount)
-                sendSms(numbers[index], message, onError = { errorCount++ }, onComplete = {
+                val brokenMessage = SmsManager.getDefault().divideMessage(message.replace("\$NAME", contacts[index].name))
+                sendSms(contacts[index].phoneNumber, brokenMessage, onError = { errorCount++ }, onComplete = {
                     sendNext()
                 })
             }
             index++
         }
-        if (numbers.isNotEmpty()) {
+        if (contacts.isNotEmpty()) {
             sendNext()
         }
     }
 
-    fun VCActivity.sendSms(number: String, message: String, onError: (code: Int) -> Unit, onComplete: () -> Unit) {
+    fun VCContext.sendSms(number: String, brokenMessage: ArrayList<String>, onError: (code: Int) -> Unit, onComplete: () -> Unit) {
+        val appContext = context.applicationContext
         requestPermission(Manifest.permission.SEND_SMS) {
             if (it) {
-                println("Sending...")
+                Log.i("sendSMS", "Sending")
+                onSend()
                 try {
-                    registerReceiver(object : BroadcastReceiver() {
-                        override fun onReceive(context: Context?, intent: Intent?) {
-                            println("RESULT! $resultCode")
+                    var partsThrough = 0
+                    var errorCode: Int? = null
+                    appContext.registerReceiver(object : BroadcastReceiver() {
+                        override fun onReceive(context: Context, intent: Intent?) {
+                            val part = intent?.getIntExtra("part", -1)
+                            partsThrough++
                             when (resultCode) {
                                 Activity.RESULT_OK -> {
-                                    onComplete.invoke()
+                                    Log.i("sendSMS", "Success part $part / $partsThrough")
                                 }
                                 else -> {
-                                    onError.invoke(resultCode)
+                                    Log.e("sendSMS", "Error part $part / $partsThrough: $resultCode")
+                                    errorCode = resultCode
                                 }
                             }
-                            unregisterReceiver(this)
+                            if (partsThrough == brokenMessage.size) {
+                                Log.i("sendSMS", "Finished with this text")
+                                appContext.unregisterReceiver(this)
+                                if (errorCode == null)
+                                    onComplete.invoke()
+                                else
+                                    onError.invoke(errorCode!!)
+                            }
                         }
                     }, IntentFilter(SendVC.SENT))
-                    SmsManager.getDefault().sendTextMessage(number, null, message, PendingIntent.getBroadcast(this, 0, Intent(SendVC.SENT), 0), null)
+                    SmsManager.getDefault().sendMultipartTextMessage(
+                            number,
+                            null,
+                            brokenMessage,
+                            ArrayList(Array<PendingIntent>(brokenMessage.size) {
+                                PendingIntent.getBroadcast(
+                                        context,
+                                        0,
+                                        Intent(SendVC.SENT).apply {
+                                            putExtra("part", it)
+                                        },
+                                        0
+                                )
+                            }.toList()),
+                            null
+                    )
                 } catch(e: Throwable) {
                     e.printStackTrace()
                 }
